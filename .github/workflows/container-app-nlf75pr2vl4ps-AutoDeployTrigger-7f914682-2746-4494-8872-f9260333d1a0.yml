@@ -1,0 +1,47 @@
+name: Trigger auto deployment for container-app-nlf75pr2vl4ps
+
+# When this action will be executed
+on:
+  # Automatically trigger it when detected changes in repo
+  push:
+    branches: 
+      [ appspaces-deployment ]
+    paths:
+    - 'packages/api/**'
+    - '.github/workflows/container-app-nlf75pr2vl4ps-AutoDeployTrigger-7f914682-2746-4494-8872-f9260333d1a0.yml'
+
+  # Allow manual trigger 
+  workflow_dispatch:      
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    permissions: 
+      id-token: write #This is required for requesting the OIDC JWT Token
+      contents: read #Required when GH token is used to authenticate with private repo
+
+    steps:
+      - name: Checkout to the branch
+        uses: actions/checkout@v2
+
+      - name: Azure Login
+        uses: azure/login@v1
+        with:
+          client-id: ${{ secrets.CONTAINERAPPNLF75PR2VL4PS_AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.CONTAINERAPPNLF75PR2VL4PS_AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.CONTAINERAPPNLF75PR2VL4PS_AZURE_SUBSCRIPTION_ID }}
+
+      - name: Build and push container image to registry
+        uses: azure/container-apps-deploy-action@v2
+        with:
+          appSourcePath: ${{ github.workspace }}/packages/api 
+          registryUrl: 
+          registryUsername: ${{ secrets.CONTAINERAPPNLF75PR2VL4PS_REGISTRY_USERNAME }}
+          registryPassword: ${{ secrets.CONTAINERAPPNLF75PR2VL4PS_REGISTRY_PASSWORD }}
+          containerAppName: container-app-nlf75pr2vl4ps
+          resourceGroup: serverlesschatlangchainjsbe38
+          imageToBuild: default/[parameters('containerAppName')]:${{ github.sha }}
+          _buildArgumentsKey_: |
+            _buildArgumentsValues_
+
+
